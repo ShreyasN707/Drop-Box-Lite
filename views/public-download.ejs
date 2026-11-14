@@ -1,0 +1,55 @@
+<%- include('partials/header') %>
+
+<div class="download-hero">
+  <% const fType = getFileType(file.mimetype); %>
+  <div class="download-icon icon-<%= fType %>">
+    <%= fType.substring(0, 3).toUpperCase() %>
+  </div>
+
+  <h1 class="download-title"><%= file.originalName %></h1>
+
+  <div class="download-meta">
+    <span><strong>Size:</strong> <%= formatBytes(file.size) %></span>
+    <span>&bull;</span>
+    <span><strong>Shared by:</strong> <%= file.owner ? file.owner.name : 'DropBox Lite User' %></span>
+    <span>&bull;</span>
+    <span><strong>Downloads:</strong> <%= file.downloadCount %></span>
+  </div>
+
+  <% if (isExpiringLink) { %>
+    <div style="margin-bottom: 1.5rem;">
+      <% if (isExpired) { %>
+        <div class="alert alert-error" style="justify-content: center; margin-bottom: 1rem;">
+          ⚠️ This download link expired on <%= formatDate(shareLink.expiresAt) %>.
+        </div>
+      <% } else { %>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 0.6rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1rem;">
+          ⏳ <strong>Temporary Link:</strong> Valid until <%= formatDate(shareLink.expiresAt) %>
+        </div>
+      <% } %>
+    </div>
+  <% } %>
+
+  <div>
+    <% if (isExpired) { %>
+      <button class="btn btn-secondary btn-lg" disabled style="opacity: 0.6; cursor: not-allowed; width: 100%;">
+        Link Has Expired
+      </button>
+    <% } else { %>
+      <a href="<%= downloadUrl %>" class="btn btn-primary btn-lg" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download File (<%= formatBytes(file.size) %>)
+      </a>
+    <% } %>
+  </div>
+
+  <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
+    Scanned &amp; served securely by DropBox Lite
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,233 @@
+<%- include('partials/header') %>
+
+<div style="margin-bottom: 1.25rem;">
+  <a href="/dashboard" class="btn btn-secondary btn-sm">
+    &larr; Back to My Files
+  </a>
+</div>
+
+<%- include('partials/alert') %>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <% const fType = getFileType(file.mimetype); %>
+        <div class="file-icon icon-<%= fType %>" style="width: 44px; height: 44px; font-size: 0.95rem;">
+          <%= fType.substring(0, 3).toUpperCase() %>
+        </div>
+        <div>
+          <h1 style="font-size: 1.35rem; font-weight: 700; margin: 0; word-break: break-all;"><%= file.originalName %></h1>
+          <span style="font-size: 0.85rem; color: var(--text-muted);"><%= file.mimetype %></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="/files/<%= file._id %>/download" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download File
+      </a>
+
+      <% if (isOwner) { %>
+        <form action="/files/<%= file._id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this file?');" style="display: inline;">
+          <button type="submit" class="btn btn-danger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete
+          </button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+  <hr style="margin: 1.25rem 0; border: 0; border-top: 1px solid var(--border-color);">
+
+  <!-- Stats Grid -->
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="stat-label">File Size</div>
+      <div class="stat-value"><%= formatBytes(file.size) %></div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Downloads</div>
+      <div class="stat-value"><%= file.downloadCount %></div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Last Downloaded</div>
+      <div class="stat-value" style="font-size: 0.95rem;"><%= formatDate(file.lastDownloadedAt) %></div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Upload Date</div>
+      <div class="stat-value" style="font-size: 0.95rem;"><%= formatDate(file.createdAt) %></div>
+    </div>
+  </div>
+</div>
+
+<% if (isOwner) { %>
+<div class="details-grid">
+  <!-- Left Column: Sharing Links (Public & Expiring) -->
+  <div>
+    <!-- Public Sharing Card -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <div>
+          <h2 class="card-title" style="margin: 0;">Public Sharing</h2>
+          <p class="card-subtitle" style="margin: 0;">Anyone with the link can view and download</p>
+        </div>
+        <form action="/files/<%= file._id %>/toggle-public" method="POST">
+          <button type="submit" class="btn <%= file.isPublic ? 'btn-danger' : 'btn-primary' %> btn-sm">
+            <%= file.isPublic ? 'Disable Public Access' : 'Enable Public Access' %>
+          </button>
+        </form>
+      </div>
+
+      <% if (file.isPublic) { %>
+        <% const publicUrl = `${baseUrl}/f/${file._id}`; %>
+        <div style="margin-top: 1rem;">
+          <label class="form-label" style="font-size: 0.8rem;">Permanent Public Link:</label>
+          <div class="link-box">
+            <input type="text" readonly value="<%= publicUrl %>" class="copy-input" id="publicLinkInput">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="copyToClipboard(this, '<%= publicUrl %>')">Copy</button>
+          </div>
+          <p style="font-size: 0.8rem; color: #16a34a; margin-top: 0.4rem;">
+            🟢 Public access is ACTIVE. Anyone with this link can download without signing in.
+          </p>
+        </div>
+      <% } else { %>
+        <div style="padding: 0.85rem; background: #f8fafc; border-radius: var(--radius-sm); border: 1px dashed var(--border-color); font-size: 0.875rem; color: var(--text-muted);">
+          🔒 This file is currently <strong>private</strong>. Only you and users you specifically share with can access it.
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Expiring Download Links Card -->
+    <div class="card">
+      <h2 class="card-title">Expiring Download Links</h2>
+      <p class="card-subtitle">Generate secure temporary links that automatically stop working after a chosen duration.</p>
+
+      <form action="/files/<%= file._id %>/create-share-link" method="POST" style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.5rem;">
+        <div style="flex: 1; min-width: 180px;">
+          <label class="form-label" for="durationSelect">Link Expiration Period</label>
+          <select id="durationSelect" name="duration" class="form-select">
+            <option value="15m">15 Minutes</option>
+            <option value="1h">1 Hour</option>
+            <option value="6h">6 Hours</option>
+            <option value="24h" selected>24 Hours (1 Day)</option>
+            <option value="7d">7 Days</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          Generate Link
+        </button>
+      </form>
+
+      <% if (file.shareLinks && file.shareLinks.length > 0) { %>
+        <div class="table-responsive">
+          <table class="file-table" style="font-size: 0.85rem;">
+            <thead>
+              <tr>
+                <th>Link</th>
+                <th>Status / Expires</th>
+                <th>Downloads</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% file.shareLinks.forEach(function(link) { %>
+                <% const linkUrl = `${baseUrl}/s/${link.token}`; %>
+                <% const expired = isExpired(link.expiresAt); %>
+                <tr>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                      <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">.../s/<%= link.token.substring(0, 8) %>...</code>
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="copyToClipboard(this, '<%= linkUrl %>')" title="Copy link">Copy</button>
+                    </div>
+                  </td>
+                  <td>
+                    <% if (expired) { %>
+                      <span class="badge badge-expired">Expired</span>
+                    <% } else { %>
+                      <span class="badge badge-active">Active</span>
+                    <% } %>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                      <%= formatDate(link.expiresAt) %>
+                    </div>
+                  </td>
+                  <td>
+                    <strong><%= link.downloads %></strong>
+                  </td>
+                  <td style="text-align: right;">
+                    <form action="/files/<%= file._id %>/revoke-share-link" method="POST" style="display: inline;">
+                      <input type="hidden" name="token" value="<%= link.token %>">
+                      <button type="submit" class="btn btn-danger btn-sm" title="Revoke link">Revoke</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">No expiring links have been generated yet.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Right Column: User Permissions & Access Control -->
+  <div>
+    <div class="card">
+      <h2 class="card-title">User Permissions</h2>
+      <p class="card-subtitle">Authorize specific registered users by email to view and download this file.</p>
+
+      <form action="/files/<%= file._id %>/share-user" method="POST" style="margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label" for="shareEmailInput">User Email</label>
+          <input type="email" id="shareEmailInput" name="email" class="form-input" placeholder="collaborator@example.com" required>
+        </div>
+        <button type="submit" class="btn btn-secondary" style="width: 100%;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+          Grant Access
+        </button>
+      </form>
+
+      <label class="form-label">Authorized Users (<%= file.sharedWith.length %>)</label>
+      <% if (file.sharedWith && file.sharedWith.length > 0) { %>
+        <ul style="list-style: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden;">
+          <% file.sharedWith.forEach(function(item) { %>
+            <li style="padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+              <div>
+                <span style="font-weight: 500;"><%= item.email %></span>
+                <div style="font-size: 0.725rem; color: var(--text-muted);">Added <%= formatDate(item.addedAt) %></div>
+              </div>
+              <form action="/files/<%= file._id %>/unshare-user" method="POST" style="margin: 0;">
+                <input type="hidden" name="userId" value="<%= item.user %>">
+                <button type="submit" class="btn btn-danger btn-sm" title="Revoke access">&times; Revoke</button>
+              </form>
+            </li>
+          <% }); %>
+        </ul>
+      <% } else { %>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">This file is not shared with any specific users.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<%- include('partials/footer') %>
