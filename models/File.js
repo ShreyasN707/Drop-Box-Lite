@@ -87,7 +87,6 @@ const fileSchema = new mongoose.Schema(
   }
 );
 
-// Method to verify if a user has access to this file
 fileSchema.methods.canAccess = function (userId) {
   if (this.isPublic) return true;
   if (!userId) return false;

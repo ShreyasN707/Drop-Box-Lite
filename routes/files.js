@@ -8,21 +8,12 @@ const { requireAuth } = require('../middleware/auth');
 const { upload, maxFileSizeMb } = require('../middleware/upload');
 const { formatBytes, formatDate, isExpired, getFileType } = require('../utils/formatters');
 
-// All routes in this router require authentication
-router.use(requireAuth);
+router.use(['/dashboard', '/files'], requireAuth);
 
-/**
- * GET /dashboard
- * Show user files, shared files, and storage usage
- */
 router.get('/dashboard', async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-
-    // Get files owned by user
     const myFiles = await File.find({ owner: user._id }).sort({ createdAt: -1 });
-
-    // Get files shared with user
     const sharedFiles = await File.find({ 'sharedWith.user': user._id })
       .populate('owner', 'name email')
       .sort({ createdAt: -1 });
@@ -56,10 +47,6 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
-/**
- * POST /files/upload
- * Handle file upload with Multer and enforce storage quota
- */
 router.post('/files/upload', (req, res) => {
   const uploadSingle = upload.single('file');
 
@@ -79,9 +66,7 @@ router.post('/files/upload', (req, res) => {
       const user = await User.findById(req.user._id);
       const remainingQuota = user.storageQuota - user.storageUsed;
 
-      // Check if file fits in user storage quota
       if (req.file.size > remainingQuota) {
-        // Clean up uploaded file
         try {
           await fs.unlink(req.file.path);
         } catch (unlinkErr) {
@@ -92,7 +77,6 @@ router.post('/files/upload', (req, res) => {
         );
       }
 
-      // Save file metadata
       const newFile = new File({
         originalName: req.file.originalname,
         filename: req.file.filename,
@@ -104,7 +88,6 @@ router.post('/files/upload', (req, res) => {
 
       await newFile.save();
 
-      // Update user storage quota
       user.storageUsed += req.file.size;
       await user.save();
 
@@ -121,10 +104,6 @@ router.post('/files/upload', (req, res) => {
   });
 });
 
-/**
- * GET /files/:id
- * View file details and sharing configuration
- */
 router.get('/files/:id', async (req, res) => {
   try {
     const file = await File.findById(req.params.id).populate('owner', 'name email');
@@ -174,10 +153,6 @@ router.get('/files/:id', async (req, res) => {
   }
 });
 
-/**
- * GET /files/:id/download
- * Download file directly with permission check and download tracking
- */
 router.get('/files/:id/download', async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -189,7 +164,6 @@ router.get('/files/:id/download', async (req, res) => {
       });
     }
 
-    // Permission check
     const isOwner = file.owner.toString() === req.user._id.toString();
     const isShared = file.sharedWith.some((s) => s.user.toString() === req.user._id.toString());
 
@@ -201,7 +175,6 @@ router.get('/files/:id/download', async (req, res) => {
       });
     }
 
-    // Track download
     file.downloadCount += 1;
     file.lastDownloadedAt = new Date();
     await file.save();
@@ -226,10 +199,6 @@ router.get('/files/:id/download', async (req, res) => {
   }
 });
 
-/**
- * POST /files/:id/delete
- * Delete file from disk, update quota, remove record
- */
 router.post('/files/:id/delete', async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -237,24 +206,20 @@ router.post('/files/:id/delete', async (req, res) => {
       return res.redirect('/dashboard?error=File not found.');
     }
 
-    // Only owner can delete
     if (file.owner.toString() !== req.user._id.toString()) {
       return res.redirect('/dashboard?error=You are not authorized to delete this file.');
     }
 
-    // Remove file on disk
     try {
       await fs.unlink(file.path);
     } catch (fsErr) {
       console.warn('File already deleted or missing on disk:', fsErr.message);
     }
 
-    // Decrement user storage
     const user = await User.findById(req.user._id);
     user.storageUsed = Math.max(0, user.storageUsed - file.size);
     await user.save();
 
-    // Remove file record
     await File.findByIdAndDelete(file._id);
 
     res.redirect('/dashboard?success=File deleted successfully.');
@@ -264,10 +229,6 @@ router.post('/files/:id/delete', async (req, res) => {
   }
 });
 
-/**
- * POST /files/:id/toggle-public
- * Toggle public / private status
- */
 router.post('/files/:id/toggle-public', async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -288,10 +249,6 @@ router.post('/files/:id/toggle-public', async (req, res) => {
   }
 });
 
-/**
- * POST /files/:id/share-user
- * Grant read/download access to another user by email
- */
 router.post('/files/:id/share-user', async (req, res) => {
   try {
     const { email } = req.body;
@@ -335,10 +292,6 @@ router.post('/files/:id/share-user', async (req, res) => {
   }
 });
 
-/**
- * POST /files/:id/unshare-user
- * Revoke file access from a specific user
- */
 router.post('/files/:id/unshare-user', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -359,13 +312,9 @@ router.post('/files/:id/unshare-user', async (req, res) => {
   }
 });
 
-/**
- * POST /files/:id/create-share-link
- * Generate a new expiring download link
- */
 router.post('/files/:id/create-share-link', async (req, res) => {
   try {
-    const { duration } = req.body; // e.g. "15m", "1h", "24h", "7d"
+    const { duration } = req.body;
     const file = await File.findById(req.params.id);
     if (!file) return res.redirect('/dashboard?error=File not found.');
 
@@ -373,7 +322,7 @@ router.post('/files/:id/create-share-link', async (req, res) => {
       return res.redirect(`/files/${file._id}?error=Only the owner can create expiring links.`);
     }
 
-    let durationMs = 24 * 60 * 60 * 1000; // default 24h
+    let durationMs = 24 * 60 * 60 * 1000;
     switch (duration) {
       case '15m':
         durationMs = 15 * 60 * 1000;
@@ -413,10 +362,6 @@ router.post('/files/:id/create-share-link', async (req, res) => {
   }
 });
 
-/**
- * POST /files/:id/revoke-share-link
- * Revoke an existing expiring share link
- */
 router.post('/files/:id/revoke-share-link', async (req, res) => {
   try {
     const { token } = req.body;

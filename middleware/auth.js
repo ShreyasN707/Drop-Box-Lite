@@ -1,8 +1,5 @@
 const User = require('../models/User');
 
-/**
- * Require user to be logged in
- */
 async function requireAuth(req, res, next) {
   if (!req.session || !req.session.userId) {
     req.session.returnTo = req.originalUrl;
@@ -24,9 +21,6 @@ async function requireAuth(req, res, next) {
   }
 }
 
-/**
- * Optional authentication: populates res.locals.currentUser if logged in
- */
 async function optionalAuth(req, res, next) {
   if (req.session && req.session.userId) {
     try {
@@ -36,15 +30,11 @@ async function optionalAuth(req, res, next) {
         res.locals.currentUser = user;
       }
     } catch (err) {
-      // ignore
     }
   }
   next();
 }
 
-/**
- * Guest only: redirect to dashboard if already logged in
- */
 function requireGuest(req, res, next) {
   if (req.session && req.session.userId) {
     return res.redirect('/dashboard');

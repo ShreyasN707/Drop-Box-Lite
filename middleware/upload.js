@@ -13,7 +13,6 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Generate safe, unique filename using crypto hex + original extension
     const ext = path.extname(file.originalname);
     const uniqueHex = crypto.randomBytes(16).toString('hex');
     cb(null, `${Date.now()}-${uniqueHex}${ext}`);
@@ -24,7 +23,7 @@ const maxMb = parseInt(process.env.MAX_FILE_SIZE_MB, 10) || 25;
 const upload = multer({
   storage,
   limits: {
-    fileSize: maxMb * 1024 * 1024, // in bytes
+    fileSize: maxMb * 1024 * 1024,
   },
 });
 

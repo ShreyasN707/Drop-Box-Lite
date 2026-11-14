@@ -1,6 +1,3 @@
-/**
- * Format bytes to human readable string (KB, MB, GB)
- */
 function formatBytes(bytes, decimals = 2) {
   if (!bytes || bytes === 0) return '0 B';
   const k = 1024;
@@ -10,9 +7,6 @@ function formatBytes(bytes, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-/**
- * Format date to human-readable string
- */
 function formatDate(date) {
   if (!date) return 'Never';
   const d = new Date(date);
@@ -26,17 +20,11 @@ function formatDate(date) {
   });
 }
 
-/**
- * Check if a date is expired
- */
 function isExpired(date) {
   if (!date) return false;
   return new Date(date).getTime() < Date.now();
 }
 
-/**
- * Get category & icon type based on mimetype
- */
 function getFileType(mimetype = '') {
   if (mimetype.startsWith('image/')) return 'image';
   if (mimetype.startsWith('video/')) return 'video';

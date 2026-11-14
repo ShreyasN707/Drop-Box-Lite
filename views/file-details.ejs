@@ -49,7 +49,6 @@
 
   <hr style="margin: 1.25rem 0; border: 0; border-top: 1px solid var(--border-color);">
 
-  <!-- Stats Grid -->
   <div class="stat-grid">
     <div class="stat-box">
       <div class="stat-label">File Size</div>
@@ -72,9 +71,7 @@
 
 <% if (isOwner) { %>
 <div class="details-grid">
-  <!-- Left Column: Sharing Links (Public & Expiring) -->
   <div>
-    <!-- Public Sharing Card -->
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
         <div>
@@ -97,20 +94,19 @@
             <button type="button" class="btn btn-secondary btn-sm" onclick="copyToClipboard(this, '<%= publicUrl %>')">Copy</button>
           </div>
           <p style="font-size: 0.8rem; color: #16a34a; margin-top: 0.4rem;">
-            🟢 Public access is ACTIVE. Anyone with this link can download without signing in.
+            Public access is active. Anyone with this link can download without signing in.
           </p>
         </div>
       <% } else { %>
         <div style="padding: 0.85rem; background: #f8fafc; border-radius: var(--radius-sm); border: 1px dashed var(--border-color); font-size: 0.875rem; color: var(--text-muted);">
-          🔒 This file is currently <strong>private</strong>. Only you and users you specifically share with can access it.
+          This file is private. Only you and users you share with can access it.
         </div>
       <% } %>
     </div>
 
-    <!-- Expiring Download Links Card -->
     <div class="card">
       <h2 class="card-title">Expiring Download Links</h2>
-      <p class="card-subtitle">Generate secure temporary links that automatically stop working after a chosen duration.</p>
+      <p class="card-subtitle">Generate temporary links that automatically expire after a chosen duration.</p>
 
       <form action="/files/<%= file._id %>/create-share-link" method="POST" style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.5rem;">
         <div style="flex: 1; min-width: 180px;">
@@ -184,11 +180,10 @@
     </div>
   </div>
 
-  <!-- Right Column: User Permissions & Access Control -->
   <div>
     <div class="card">
       <h2 class="card-title">User Permissions</h2>
-      <p class="card-subtitle">Authorize specific registered users by email to view and download this file.</p>
+      <p class="card-subtitle">Authorize registered users by email to view and download this file.</p>
 
       <form action="/files/<%= file._id %>/share-user" method="POST" style="margin-bottom: 1.5rem;">
         <div class="form-group">

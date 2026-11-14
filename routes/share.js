@@ -6,10 +6,6 @@ const { optionalAuth } = require('../middleware/auth');
 
 router.use(optionalAuth);
 
-/**
- * GET /s/:token
- * Landing page for expiring download link
- */
 router.get('/s/:token', async (req, res) => {
   try {
     const { token } = req.params;
@@ -57,10 +53,6 @@ router.get('/s/:token', async (req, res) => {
   }
 });
 
-/**
- * GET /s/:token/download
- * Direct download for expiring link with download tracking
- */
 router.get('/s/:token/download', async (req, res) => {
   try {
     const { token } = req.params;
@@ -83,7 +75,6 @@ router.get('/s/:token/download', async (req, res) => {
       });
     }
 
-    // Update tracking
     file.downloadCount += 1;
     file.lastDownloadedAt = new Date();
     shareLink.downloads += 1;
@@ -109,10 +100,6 @@ router.get('/s/:token/download', async (req, res) => {
   }
 });
 
-/**
- * GET /f/:id
- * Landing page for public file link
- */
 router.get('/f/:id', async (req, res) => {
   try {
     const file = await File.findById(req.params.id).populate('owner', 'name');
@@ -156,10 +143,6 @@ router.get('/f/:id', async (req, res) => {
   }
 });
 
-/**
- * GET /f/:id/download
- * Public download endpoint with download tracking
- */
 router.get('/f/:id/download', async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -180,7 +163,6 @@ router.get('/f/:id/download', async (req, res) => {
       });
     }
 
-    // Update tracking
     file.downloadCount += 1;
     file.lastDownloadedAt = new Date();
     await file.save();

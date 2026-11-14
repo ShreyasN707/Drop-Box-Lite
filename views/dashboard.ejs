@@ -2,7 +2,6 @@
 
 <%- include('partials/alert') %>
 
-<!-- Storage Quota Card -->
 <div class="card">
   <div class="quota-header">
     <strong>Storage Usage</strong>
@@ -17,7 +16,6 @@
   </div>
 </div>
 
-<!-- Upload Section -->
 <div class="upload-card">
   <form action="/files/upload" method="POST" enctype="multipart/form-data" class="upload-form">
     <div>
@@ -45,7 +43,6 @@
   </form>
 </div>
 
-<!-- My Files Section -->
 <div class="card" style="padding: 0; overflow: hidden;">
   <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
     <div>
@@ -155,7 +152,6 @@
   <% } %>
 </div>
 
-<!-- Files Shared With Me Section -->
 <% if (sharedFiles && sharedFiles.length > 0) { %>
   <div class="card" style="padding: 0; overflow: hidden;">
     <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color);">

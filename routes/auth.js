@@ -3,7 +3,6 @@ const router = express.Router();
 const User = require('../models/User');
 const { requireGuest } = require('../middleware/auth');
 
-// GET /login
 router.get('/login', requireGuest, (req, res) => {
   res.render('auth/login', {
     title: 'Sign In - DropBox Lite',
@@ -12,7 +11,6 @@ router.get('/login', requireGuest, (req, res) => {
   });
 });
 
-// POST /login
 router.post('/login', requireGuest, async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -42,7 +40,6 @@ router.post('/login', requireGuest, async (req, res) => {
       });
     }
 
-    // Set session
     req.session.userId = user._id;
     const returnTo = req.session.returnTo || '/dashboard';
     delete req.session.returnTo;
@@ -57,7 +54,6 @@ router.post('/login', requireGuest, async (req, res) => {
   }
 });
 
-// GET /register
 router.get('/register', requireGuest, (req, res) => {
   res.render('auth/register', {
     title: 'Create Account - DropBox Lite',
@@ -66,7 +62,6 @@ router.get('/register', requireGuest, (req, res) => {
   });
 });
 
-// POST /register
 router.post('/register', requireGuest, async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
@@ -111,7 +106,6 @@ router.post('/register', requireGuest, async (req, res) => {
     });
     await user.save();
 
-    // Auto login
     req.session.userId = user._id;
     res.redirect('/dashboard?success=Account created successfully! Welcome to DropBox Lite.');
   } catch (err) {
@@ -124,7 +118,6 @@ router.post('/register', requireGuest, async (req, res) => {
   }
 });
 
-// POST /logout
 router.post('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -134,7 +127,6 @@ router.post('/logout', (req, res) => {
   });
 });
 
-// GET /logout (convenience)
 router.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
